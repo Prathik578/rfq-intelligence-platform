@@ -2,6 +2,7 @@ import { z } from "zod";
 import { parse as parseCookie } from "cookie";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
+import { ENV } from "./_core/env";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -9,7 +10,7 @@ import { invokeLLM } from "./_core/llm";
 import { notifyOwner } from "./_core/notification";
 import { createHeartbeatJob, deleteHeartbeatJob } from "./_core/heartbeat";
 import { storagePut } from "./storage";
-import { addRequirements, addRfqDocument, addRfqItems, createClarification, createNotification, createRfqRecord, getDeadlineScheduleTaskUid, getRfqWorkspace, listNotifications, listRfqs, logActivity, markNotificationRead, saveQuote, setDeadlineScheduleTaskUid, updateClarification } from "./db";
+import { addRequirements, addRfqDocument, addRfqItems, createClarification, createNotification, createRfqRecord, getDeadlineScheduleTaskUid, getRfqWorkspace, getUserByOpenId, listNotifications, listRfqs, logActivity, markNotificationRead, saveQuote, setDeadlineScheduleTaskUid, updateClarification } from "./db";
 import { calculateQuote, transitionClarification } from "../shared/rfq";
 import { resolveNotificationRecipient } from "../shared/notifications";
 
@@ -151,19 +152,21 @@ export const appRouter = router({
   notifications: router({
     list: protectedProcedure.query(({ ctx }) => listNotifications(ctx.user.id)),
     markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(({ ctx, input }) => markNotificationRead(input.id, ctx.user.id).then(() => ({ success: true } as const))),
-    deadlineScheduleStatus: protectedProcedure.query(async ({ ctx }) => ({ enabled: Boolean(await getDeadlineScheduleTaskUid(ctx.user.id)) })),
+    deadlineScheduleStatus: protectedProcedure.query(async () => { const owner = await getUserByOpenId(ENV.ownerOpenId); return { enabled: Boolean(owner && await getDeadlineScheduleTaskUid(owner.id)) }; }),
     deadlineSchedule: protectedProcedure.input(z.object({ action: z.enum(["enable", "disable"]), cron: z.string().default("0 0 */2 * * *") })).mutation(async ({ ctx, input }) => {
       const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME];
       if (!sessionToken) throw new TRPCError({ code: "UNAUTHORIZED", message: "A signed browser session is required to manage deadline alerts" });
-      const currentTaskUid = await getDeadlineScheduleTaskUid(ctx.user.id);
+      const owner = await getUserByOpenId(ENV.ownerOpenId);
+      if (!owner) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Project owner record is unavailable" });
+      const currentTaskUid = await getDeadlineScheduleTaskUid(owner.id);
       if (input.action === "disable") {
         if (currentTaskUid) await deleteHeartbeatJob(currentTaskUid, sessionToken);
-        await setDeadlineScheduleTaskUid(ctx.user.id, null);
+        await setDeadlineScheduleTaskUid(owner.id, null);
         return { enabled: false } as const;
       }
       if (currentTaskUid) return { enabled: true, taskUid: currentTaskUid } as const;
       const job = await createHeartbeatJob({ name: `rfq-deadline-alerts-${ctx.user.id}`, cron: input.cron, path: "/api/scheduled/rfq-deadlines", description: "Materialize approaching and overdue RFQ deadline alerts" }, sessionToken);
-      await setDeadlineScheduleTaskUid(ctx.user.id, job.taskUid);
+      await setDeadlineScheduleTaskUid(owner.id, job.taskUid);
       return { enabled: true, taskUid: job.taskUid, nextExecutionAt: job.nextExecutionAt } as const;
     }),
   }),

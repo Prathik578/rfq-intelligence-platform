@@ -16,7 +16,7 @@
 - [x] Add automated owner/assignee notification support
 - [x] Add Vitest coverage for core RFQ workflow calculations and validation
 - [x] Run typecheck, tests, and visual verification; fix issues
-- [ ] Save final project checkpoint for delivery
+- [x] Save final project checkpoint for delivery
 
 ## History
 
@@ -40,5 +40,8 @@
 - [x] Replace dashboard fallback-on-empty behavior with explicit live empty states
 - [x] Implement persisted quote release-readiness checks and a quote release mutation
 
-- [ ] Create and verify the project-owner Heartbeat deadline cron with durable task UID lifecycle
-- [ ] Replace remaining dashboard demo pipeline and priority summaries with live-derived values or explicit empty states
+- [x] Create and verify the project-owner Heartbeat deadline cron with durable task UID lifecycle
+- [x] Replace remaining dashboard demo pipeline and priority summaries with live-derived values or explicit empty states
+
+- [x] Execute and verify the owner-level Heartbeat deadline schedule lifecycle
+- [x] Finish live pipeline stage percentages and pricing-stage derivation

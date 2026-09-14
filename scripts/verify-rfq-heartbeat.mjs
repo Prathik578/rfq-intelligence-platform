@@ -1,0 +1,12 @@
+const baseUrl = process.env.BUILT_IN_FORGE_API_URL;
+const apiKey = process.env.BUILT_IN_FORGE_API_KEY;
+const taskUid = process.env.RFQ_HEARTBEAT_TASK_UID;
+if (!baseUrl || !apiKey || !taskUid) throw new Error("Missing Heartbeat verification configuration");
+const endpoint = `${baseUrl.replace(/\/$/, "")}/webdevtoken.v1.WebDevService/ListHeartbeatJobs`;
+const response = await fetch(endpoint, { method: "POST", headers: { accept: "application/json", authorization: `Bearer ${apiKey}`, "content-type": "application/json", "connect-protocol-version": "1" }, body: JSON.stringify({ page: 1, pageSize: 100 }) });
+const body = await response.text();
+if (!response.ok) throw new Error(`Heartbeat list failed (${response.status}): ${body}`);
+const result = JSON.parse(body);
+const job = result.jobs?.find((item) => item.taskUid === taskUid);
+if (!job) throw new Error(`Task ${taskUid} was not found in the owner heartbeat list`);
+console.log(JSON.stringify({ taskUid: job.taskUid, name: job.name, cronExpression: job.cronExpression, callbackPath: job.callbackPath, isEnable: job.isEnable, nextExecutionAt: job.nextExecutionAt }));
