@@ -45,3 +45,9 @@
 
 - [x] Execute and verify the owner-level Heartbeat deadline schedule lifecycle
 - [x] Finish live pipeline stage percentages and pricing-stage derivation
+
+- [x] Fix /quotes mutation returning NOT_FOUND for the current RFQ and quote workflow
+- [x] Add regression coverage for missing and existing RFQ quote mutations
+
+- [x] Add Vitest coverage for quote save with missing and existing RFQ workspaces
+- [x] Add Vitest coverage for quote release covering missing, readiness failure, and successful release paths

@@ -36,7 +36,7 @@ export const appRouter = router({
   }),
   rfq: router({
     list: protectedProcedure.query(({ ctx }) => listRfqs(ctx.user.id, ctx.user.role)),
-    get: protectedProcedure.input(z.object({ rfqNumber: z.string() })).query(({ ctx, input }) => getRfqWorkspace(input.rfqNumber, ctx.user.id, ctx.user.role)),
+    get: protectedProcedure.input(z.object({ rfqNumber: z.string() })).query(async ({ ctx, input }) => (await getRfqWorkspace(input.rfqNumber, ctx.user.id, ctx.user.role)) ?? null),
     create: protectedProcedure.input(z.object({ title: z.string().min(2), companyName: z.string().min(2), contactName: z.string().optional(), email: z.string().email().optional(), estimatedValue: z.string().optional(), file: z.object({ name: z.string(), mimeType: z.string(), sizeBytes: z.number(), base64: z.string() }).optional() })).mutation(async ({ ctx, input }) => {
       const rfqNumber = `RFQ-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
       const created = await createRfqRecord({ ...input, rfqNumber, assignedUserId: ctx.user.id });
