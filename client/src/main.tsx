@@ -15,8 +15,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (typeof window === "undefined") return;
 
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
+  const previewMode = import.meta.env.DEV && !import.meta.env.VITE_OAUTH_PORTAL_URL;
 
-  if (!isUnauthorized) return;
+  if (!isUnauthorized || previewMode) return;
 
   startLogin();
 };

@@ -27,9 +27,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return saved ? parseInt(saved, 10) : 264;
   });
   const { loading, user } = useAuth();
+  const previewMode = import.meta.env.DEV && !import.meta.env.VITE_OAUTH_PORTAL_URL;
   useEffect(() => localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString()), [sidebarWidth]);
-  if (loading) return <DashboardLayoutSkeleton />;
-  if (!user) return <div className="min-h-screen grid place-items-center bg-[#f7f8fb]"><div className="max-w-sm space-y-5 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#152238] text-white shadow-xl"><Sparkles className="h-6 w-6" /></div><h1 className="text-2xl font-semibold text-[#152238]">Welcome to Lattice RFQ</h1><p className="text-sm leading-6 text-slate-500">Sign in to access your quotation operations workspace.</p><Button onClick={() => startLogin()} className="w-full rounded-xl bg-[#152238] hover:bg-[#223653]">Sign in to workspace</Button></div></div>;
+  if (loading && !previewMode) return <DashboardLayoutSkeleton />;
+  if (!user && !previewMode) return <div className="min-h-screen grid place-items-center bg-[#f7f8fb]"><div className="max-w-sm space-y-5 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#152238] text-white shadow-xl"><Sparkles className="h-6 w-6" /></div><h1 className="text-2xl font-semibold text-[#152238]">Welcome to Lattice RFQ</h1><p className="text-sm leading-6 text-slate-500">Sign in to access your quotation operations workspace.</p><Button onClick={() => startLogin()} className="w-full rounded-xl bg-[#152238] hover:bg-[#223653]">Sign in to workspace</Button></div></div>;
   return <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}><DashboardLayoutContent setSidebarWidth={setSidebarWidth}>{children}</DashboardLayoutContent></SidebarProvider>;
 }
 
