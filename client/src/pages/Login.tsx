@@ -1,23 +1,27 @@
 import { Button } from "@/components/ui/button";
-import { startLogin } from "@/const";
+import { supabase } from "@/lib/supabase";
 import { ArrowRight, CheckCircle2, FileText, LockKeyhole, Sparkles, Workflow } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 
 export default function Login() {
   const [isStarting, setIsStarting] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
     setIsStarting(true);
-    try {
-      startLogin();
-    } catch (loginError) {
-      console.error("[v0] Login redirect failed", loginError);
-      setIsStarting(false);
-      setError("Login is not configured for this environment yet. Please configure the workspace authentication URL and try again.");
-    }
+    const result = isSignUp
+      ? await supabase.auth.signUp({ email, password })
+      : await supabase.auth.signInWithPassword({ email, password });
+    if (result.error) setError(result.error.message);
+    else if (isSignUp && !result.data.session) setError("Check your email to confirm your account before signing in.");
+    else window.location.href = "/";
+    setIsStarting(false);
   };
 
   return (
@@ -46,9 +50,13 @@ export default function Login() {
             <div className="mb-8"><p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#6885a5]">Welcome back</p><h2 className="text-3xl font-semibold tracking-[-0.04em]">Sign in to your workspace</h2><p className="mt-3 text-sm leading-6 text-slate-500">Access your RFQs, quote studio, and team workload from one place.</p></div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(28,49,76,0.08)] sm:p-8">
               <div className="mb-6 grid grid-cols-3 gap-2"><div className="flex flex-col items-center gap-2 rounded-xl bg-[#edf4fb] p-3 text-center"><FileText className="h-4 w-4 text-[#52759f]" /><span className="text-[10px] font-semibold text-[#315477]">RFQs</span></div><div className="flex flex-col items-center gap-2 rounded-xl bg-[#f5f1fb] p-3 text-center"><Workflow className="h-4 w-4 text-[#806ca9]" /><span className="text-[10px] font-semibold text-[#69558f]">Workflow</span></div><div className="flex flex-col items-center gap-2 rounded-xl bg-[#eef8f1] p-3 text-center"><LockKeyhole className="h-4 w-4 text-[#5b9a71]" /><span className="text-[10px] font-semibold text-[#43855a]">Secure</span></div></div>
-              <Button type="button" onClick={handleLogin} disabled={isStarting} className="h-12 w-full rounded-xl bg-[#152238] text-sm font-semibold hover:bg-[#223653]">{isStarting ? "Opening secure sign in…" : "Continue to secure sign in"}<ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div><label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">Work email</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#52759f] focus:ring-2 focus:ring-[#52759f]/20" placeholder="you@company.com" /></div>
+                <div><label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">Password</label><input id="password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#52759f] focus:ring-2 focus:ring-[#52759f]/20" placeholder="At least 6 characters" /></div>
+                <Button type="submit" disabled={isStarting} className="h-12 w-full rounded-xl bg-[#152238] text-sm font-semibold hover:bg-[#223653]">{isStarting ? "Checking…" : isSignUp ? "Create account" : "Sign in"}<ArrowRight className="ml-2 h-4 w-4" /></Button>
+              </form>
               {error && <p role="alert" className="mt-4 rounded-lg bg-rose-50 p-3 text-xs leading-5 text-rose-700">{error}</p>}
-              <p className="mt-5 text-center text-xs leading-5 text-slate-400">You will be redirected to your organization's secure authentication provider.</p>
+              <button type="button" onClick={() => { setIsSignUp((value) => !value); setError(null); }} className="mt-5 w-full text-center text-xs font-medium text-[#52759f] hover:underline">{isSignUp ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
             </div>
             <p className="mt-8 text-center text-xs text-slate-400">Need access? Contact your workspace administrator.</p>
           </div>
