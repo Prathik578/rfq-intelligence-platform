@@ -6,7 +6,7 @@ import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useIsMobile } from "@/hooks/useMobile";
 import { trpc } from "@/lib/trpc";
-import { BarChart3, Bell, CheckCheck, FileCheck2, Inbox, LayoutDashboard, LogOut, PanelLeft, Settings2, Sparkles, Users2 } from "lucide-react";
+import { ArrowRight, BarChart3, Bell, CheckCheck, CheckCircle2, FileCheck2, Inbox, LayoutDashboard, LogOut, PanelLeft, Settings2, Sparkles, Users2 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
@@ -21,15 +21,42 @@ const menuItems = [
 ];
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 
+function SignInWebsite() {
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleLoginError = (event: Event) => {
+      setLoginError((event as CustomEvent<string>).detail);
+    };
+    window.addEventListener("rfq:login-error", handleLoginError);
+    return () => window.removeEventListener("rfq:login-error", handleLoginError);
+  }, []);
+
+  return <main className="min-h-screen overflow-hidden bg-[#f7f8fb] text-[#152238]">
+    <section className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-6 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-12">
+      <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-[#dceaf7] blur-3xl" aria-hidden="true" />
+      <div className="relative z-10">
+        <div className="mb-12 flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[#152238] text-white shadow-lg"><Sparkles className="h-5 w-5" /></div><div><p className="font-display text-lg font-semibold tracking-tight">Lattice RFQ</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Quote operations</p></div></div>
+        <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-[#52759f]">The calm center of your quoting team</p>
+        <h1 className="max-w-xl font-display text-5xl font-semibold leading-[1.02] tracking-[-0.06em] sm:text-6xl">Turn every RFQ into a confident quote.</h1>
+        <p className="mt-6 max-w-lg text-base leading-7 text-slate-500">Bring requests, requirements, collaboration, and pricing into one clear workspace built for teams that cannot afford missed details.</p>
+        <div className="mt-9 grid gap-3 sm:grid-cols-2"><div className="flex items-center gap-3 text-sm font-medium text-slate-600"><CheckCircle2 className="h-4 w-4 text-[#5b9a71]" />AI-assisted requirement review</div><div className="flex items-center gap-3 text-sm font-medium text-slate-600"><CheckCircle2 className="h-4 w-4 text-[#5b9a71]" />A single source of truth</div><div className="flex items-center gap-3 text-sm font-medium text-slate-600"><CheckCircle2 className="h-4 w-4 text-[#5b9a71]" />Faster, safer quote release</div><div className="flex items-center gap-3 text-sm font-medium text-slate-600"><CheckCircle2 className="h-4 w-4 text-[#5b9a71]" />Built for cross-functional teams</div></div>
+      </div>
+      <div className="relative z-10 rounded-[2rem] border border-white/80 bg-white/85 p-3 shadow-[0_30px_80px_rgba(28,49,76,0.14)] backdrop-blur"><div className="rounded-[1.5rem] bg-[#152238] p-7 text-white sm:p-9"><div className="mb-12 flex items-center justify-between"><span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#b9d4f2]">Workspace access</span><span className="h-2 w-2 rounded-full bg-[#79b28e] shadow-[0_0_0_5px_rgba(121,178,142,0.12)]" /></div><h2 className="font-display text-3xl font-semibold tracking-[-0.04em]">Welcome back.</h2><p className="mt-3 max-w-sm text-sm leading-6 text-slate-300">Sign in to pick up exactly where your team left off.</p><Button onClick={() => { setLoginError(null); startLogin(); }} className="mt-8 h-12 w-full rounded-xl bg-white text-[#152238] hover:bg-[#edf4fb]">Sign in to workspace <ArrowRight className="ml-2 h-4 w-4" /></Button>{loginError && <p role="alert" className="mt-4 rounded-lg bg-rose-400/15 px-3 py-2 text-xs text-rose-200">{loginError}</p>}<p className="mt-6 text-center text-[11px] leading-5 text-slate-400">Secure access for authorized workspace members.</p></div><div className="grid grid-cols-3 gap-3 px-5 py-5 text-center"><div><p className="font-display text-xl font-semibold text-[#152238]">24h</p><p className="mt-1 text-[10px] text-slate-400">quote target</p></div><div><p className="font-display text-xl font-semibold text-[#152238]">1</p><p className="mt-1 text-[10px] text-slate-400">shared workspace</p></div><div><p className="font-display text-xl font-semibold text-[#152238]">100%</p><p className="mt-1 text-[10px] text-slate-400">traceable</p></div></div></div>
+    </section>
+  </main>;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : 264;
   });
   const { loading, user } = useAuth();
+  const previewMode = import.meta.env.DEV && !import.meta.env.VITE_OAUTH_PORTAL_URL;
   useEffect(() => localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString()), [sidebarWidth]);
-  if (loading) return <DashboardLayoutSkeleton />;
-  if (!user) return <div className="min-h-screen grid place-items-center bg-[#f7f8fb]"><div className="max-w-sm space-y-5 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#152238] text-white shadow-xl"><Sparkles className="h-6 w-6" /></div><h1 className="text-2xl font-semibold text-[#152238]">Welcome to Lattice RFQ</h1><p className="text-sm leading-6 text-slate-500">Sign in to access your quotation operations workspace.</p><Button onClick={() => startLogin()} className="w-full rounded-xl bg-[#152238] hover:bg-[#223653]">Sign in to workspace</Button></div></div>;
+  if (loading && !previewMode) return <DashboardLayoutSkeleton />;
+  if (!user && !previewMode) return <SignInWebsite />;
   return <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}><DashboardLayoutContent setSidebarWidth={setSidebarWidth}>{children}</DashboardLayoutContent></SidebarProvider>;
 }
 
